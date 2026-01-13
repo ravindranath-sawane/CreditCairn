@@ -7,8 +7,13 @@ from typing import List, Dict, Optional, Any
 import json
 import os
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
+import logging
+from scraper import CreditCardScraper
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class CreditCardData:
     """Model for credit card data structure."""
@@ -46,6 +51,20 @@ class CreditCardData:
             "description": self.description,
         }
 
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'CreditCardData':
+        """Create CreditCardData from dictionary."""
+        return cls(
+            name=data.get("name", "Unknown Card"),
+            issuer=data.get("issuer", "Unknown Issuer"),
+            annual_fee=float(data.get("annual_fee", 0.0)),
+            rewards_rate=data.get("rewards_rate", ""),
+            welcome_bonus=data.get("welcome_bonus", ""),
+            categories=data.get("categories", []),
+            perks=data.get("perks", []),
+            description=data.get("description", "")
+        )
+
 
 class DataIngestion:
     """Handles credit card data ingestion and storage."""
@@ -59,143 +78,81 @@ class DataIngestion:
         """
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(exist_ok=True)
+        self.data_file = self.data_dir / "credit_cards.json"
+        self.metadata_file = self.data_dir / "metadata.json"
         self.cards_data: List[CreditCardData] = []
+        
+    def needs_update(self) -> bool:
+        """Check if data needs to be updated (older than 1 week)."""
+        if not self.data_file.exists() or not self.metadata_file.exists():
+            return True
+            
+        try:
+            with open(self.metadata_file, 'r') as f:
+                metadata = json.load(f)
+                last_updated = datetime.fromisoformat(metadata['last_updated'])
+                # Check if older than 7 days
+                if datetime.now() - last_updated > timedelta(days=7):
+                    logger.info("Data is older than 7 days, update required.")
+                    return True
+                return False
+        except (json.JSONDecodeError, KeyError, ValueError):
+            return True
+
+    def update_data(self) -> List[CreditCardData]:
+        """
+        Fetching latest data using Scraper.
+        """
+        logger.info("Starting data update process...")
+        scraper = CreditCardScraper()
+        raw_cards = scraper.fetch_current_cards()
+        
+        # Convert to CreditCardData objects
+        self.cards_data = [CreditCardData.from_dict(card) for card in raw_cards]
+        
+        # Save to disk
+        self.save_to_json()
+        
+        # Update metadata
+        with open(self.metadata_file, 'w') as f:
+            json.dump({
+                'last_updated': datetime.now().isoformat(),
+                'source': 'scraper',
+                'count': len(self.cards_data)
+            }, f, indent=2)
+            
+        logger.info(f"Updated database with {len(self.cards_data)} cards.")
+        return self.cards_data
     
+    def load_from_json(self) -> Optional[List[CreditCardData]]:
+        """Load credit card data from JSON file."""
+        if self.needs_update():
+            return self.update_data()
+            
+        if self.data_file.exists():
+            try:
+                with open(self.data_file, 'r') as f:
+                    data = json.load(f)
+                    self.cards_data = [CreditCardData.from_dict(item) for item in data]
+                return self.cards_data
+            except json.JSONDecodeError:
+                logger.error("Error reading data file, forcing update.")
+                return self.update_data()
+        return None
+
+    def save_to_json(self) -> None:
+        """Save scraped data to JSON file."""
+        data = [card.to_dict() for card in self.cards_data]
+        with open(self.data_file, 'w') as f:
+            json.dump(data, f, indent=2)
+
     def load_sample_data(self) -> List[CreditCardData]:
-        """
-        Load sample Canadian credit card data.
-        In production, this would scrape from actual sources.
-        
-        Returns:
-            List of credit card data objects
-        """
-        # Sample data representing Canadian credit cards
-        sample_cards = [
-            CreditCardData(
-                name="Tangerine Money-Back Credit Card",
-                issuer="Tangerine Bank",
-                annual_fee=0.0,
-                rewards_rate="2% in 2 categories, 0.5% on everything else",
-                welcome_bonus="$50 cash back or 10% cash back up to $150 in first 3 months",
-                categories=["Groceries", "Gas", "Dining", "Transit", "Entertainment"],
-                perks=["No annual fee", "No foreign transaction fees", "Mobile device insurance"],
-                description="Popular no-fee cash back card offering 2% back in up to 2 categories of your choice and 0.5% on all other purchases.",
-            ),
-            CreditCardData(
-                name="Scotiabank Gold American Express",
-                issuer="Scotiabank",
-                annual_fee=120.0,
-                rewards_rate="5x points on groceries, dining, entertainment; 3x on gas, transit; 1x on everything else",
-                welcome_bonus="30,000 bonus points",
-                categories=["Groceries", "Dining", "Entertainment", "Gas", "Transit"],
-                perks=["Scene+ points", "No foreign transaction fees", "Purchase protection", "Extended warranty"],
-                description="Premium rewards card earning 5x Scene+ points on groceries, dining, and entertainment, with no foreign transaction fees.",
-            ),
-            CreditCardData(
-                name="Simplii Financial Cash Back Visa",
-                issuer="Simplii Financial",
-                annual_fee=0.0,
-                rewards_rate="4% on dining, 1.5% on groceries & gas, 0.5% on everything else",
-                welcome_bonus="10% cash back up to $100 in first 3 months",
-                categories=["Dining", "Groceries", "Gas"],
-                perks=["No annual fee", "Contactless payments", "Visa benefits"],
-                description="No-fee card offering 4% cash back on dining, 1.5% on groceries and gas stations.",
-            ),
-            CreditCardData(
-                name="BMO Cashback World Elite Mastercard",
-                issuer="BMO",
-                annual_fee=120.0,
-                rewards_rate="5% on groceries, 3% on gas & transit, 1% on everything else",
-                welcome_bonus="$400 cash back",
-                categories=["Groceries", "Gas", "Transit"],
-                perks=["World Elite benefits", "Travel insurance", "Purchase protection", "Lounge access"],
-                description="Premium cash back card offering 5% back on groceries, 3% on gas and transit, plus World Elite Mastercard benefits.",
-            ),
-            CreditCardData(
-                name="TD Aeroplan Visa Infinite",
-                issuer="TD",
-                annual_fee=139.0,
-                rewards_rate="1.5 points per $1 on eligible Air Canada purchases, 1 point per $1 on gas, groceries, transit",
-                welcome_bonus="20,000 bonus Aeroplan points",
-                categories=["Travel", "Gas", "Groceries", "Transit"],
-                perks=["Priority check-in", "First bag free", "Travel insurance", "TD Rewards"],
-                description="Premium travel card earning Aeroplan points with bonus multipliers on Air Canada purchases and everyday spending.",
-            ),
-            CreditCardData(
-                name="CIBC Dividend Visa Infinite",
-                issuer="CIBC",
-                annual_fee=120.0,
-                rewards_rate="4% on groceries & gas, 2% on transit & restaurants, 1% on everything else",
-                welcome_bonus="10% cash back up to $200 in first 4 months",
-                categories=["Groceries", "Gas", "Transit", "Dining"],
-                perks=["Visa Infinite benefits", "Travel insurance", "Purchase protection"],
-                description="Cash back card with accelerated rates on groceries, gas, transit, and dining, plus comprehensive insurance coverage.",
-            ),
-            CreditCardData(
-                name="American Express Cobalt Card",
-                issuer="American Express",
-                annual_fee=155.88,
-                rewards_rate="5x points on groceries & dining, 3x on streaming, 2x on gas & transit, 1x on everything else",
-                welcome_bonus="Up to 30,000 bonus points",
-                categories=["Groceries", "Dining", "Streaming", "Gas", "Transit"],
-                perks=["Amex Offers", "Purchase protection", "Mobile device insurance", "Extended warranty"],
-                description="Popular points card with 5x multiplier on eats and drinks, including groceries, restaurants, and bars.",
-            ),
-            CreditCardData(
-                name="Rogers World Elite Mastercard",
-                issuer="Rogers Bank",
-                annual_fee=0.0,
-                rewards_rate="3% on foreign currency transactions, 1.5% on all other purchases",
-                welcome_bonus="$50 statement credit",
-                categories=["Foreign purchases", "General"],
-                perks=["No annual fee", "World Elite benefits", "Travel insurance", "Lounge access"],
-                description="No-fee World Elite card offering 3% back on USD purchases, making it ideal for cross-border shopping and travel.",
-            ),
-        ]
-        
-        self.cards_data = sample_cards
-        return sample_cards
-    
-    def save_to_json(self, filename: str = "credit_cards.json") -> str:
-        """
-        Save credit card data to JSON file.
-        
-        Args:
-            filename: Name of the JSON file
-            
-        Returns:
-            Path to saved file
-        """
-        filepath = self.data_dir / filename
-        
-        data_to_save = {
-            "metadata": {
-                "last_updated": datetime.now().isoformat(),
-                "total_cards": len(self.cards_data),
-                "source": "Canadian credit card data",
-            },
-            "cards": [card.to_dict() for card in self.cards_data],
-        }
-        
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(data_to_save, f, indent=2, ensure_ascii=False)
-        
-        return str(filepath)
-    
-    def load_from_json(self, filename: str = "credit_cards.json") -> List[CreditCardData]:
-        """
-        Load credit card data from JSON file.
-        
-        Args:
-            filename: Name of the JSON file
-            
-        Returns:
-            List of credit card data objects
-        """
-        filepath = self.data_dir / filename
-        
-        if not filepath.exists():
-            return []
+        """Legacy method maintained for compatibility."""
+        return self.update_data()
+
+
+    # End of class
+
         
         with open(filepath, "r", encoding="utf-8") as f:
             data = json.load(f)

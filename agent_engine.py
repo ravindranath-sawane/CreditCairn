@@ -6,10 +6,13 @@ This module provides RAG-based functionality for credit card recommendations.
 from typing import List, Dict, Any, Optional, Callable
 import os
 import json
+import time
 from pathlib import Path
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception
 import chromadb
 from chromadb.config import Settings
-import google.generativeai as genai
+from google import genai
+from google.genai import types, errors
 from data_ingestion import DataIngestion
 
 
@@ -158,13 +161,32 @@ Description: {card_dict['description']}
         return cards
 
 
+def is_rate_limit_error(e: Exception) -> bool:
+    """Check if exception is a rate limit error."""
+    # Check for ClientError (new SDK) or APIError with 429 code
+    if isinstance(e, (errors.APIError, errors.ClientError)):
+        # Check code attribute safely
+        code = getattr(e, 'code', None)
+        if code == 429:
+            return True
+        # Check status_code just in case
+        status_code = getattr(e, 'status_code', None)
+        if status_code == 429:
+            return True
+        # Check string representation
+        if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+            return True
+            
+    return False
+
+
 class CreditCairnAgent:
     """Main agent for credit card recommendations using Gemini."""
     
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model_name: str = "gemini-1.5-flash",
+        model_name: str = "gemini-flash-latest",
         data_dir: str = "data"
     ) -> None:
         """
@@ -177,11 +199,11 @@ class CreditCairnAgent:
         """
         # Configure Gemini
         self.api_key = api_key or os.getenv("GOOGLE_API_KEY", "")
+        self.client = None
         if self.api_key:
-            genai.configure(api_key=self.api_key)
+            self.client = genai.Client(api_key=self.api_key)
         
         self.model_name = model_name
-        self.model = None
         self.chat = None
         
         # Initialize retriever
@@ -209,31 +231,22 @@ When answering:
 
 Always base your recommendations on the credit card data provided to you."""
     
-    def initialize_model(self) -> None:
-        """Initialize the Gemini model."""
-        if not self.api_key:
-            raise ValueError(
-                "No API key provided. Set GOOGLE_API_KEY environment variable or pass api_key parameter."
-            )
-        
-        generation_config = {
-            "temperature": 0.7,
-            "top_p": 0.95,
-            "top_k": 40,
-            "max_output_tokens": 2048,
-        }
-        
-        self.model = genai.GenerativeModel(
-            model_name=self.model_name,
-            generation_config=generation_config,
-        )
-    
     def start_chat(self) -> None:
         """Start a new chat session."""
-        if not self.model:
-            self.initialize_model()
+        if not self.client:
+            if not self.api_key:
+                raise ValueError("No API key provided.")
+            self.client = genai.Client(api_key=self.api_key)
         
-        self.chat = self.model.start_chat(history=[])
+        self.chat = self.client.chats.create(
+            model=self.model_name,
+            config=types.GenerateContentConfig(
+                temperature=0.7,
+                top_p=0.95,
+                top_k=40,
+                max_output_tokens=2048,
+            )
+        )
     
     def get_card_context(self, query: str, n_results: int = 3) -> str:
         """
@@ -264,6 +277,11 @@ Always base your recommendations on the credit card data provided to you."""
         
         return context
     
+    @retry(
+        retry=retry_if_exception(is_rate_limit_error),
+        wait=wait_exponential(multiplier=2, min=4, max=60),
+        stop=stop_after_attempt(5)
+    )
     def chat_completion(self, user_message: str) -> str:
         """
         Get a chat completion from the agent.

@@ -9,8 +9,7 @@ import json
 from pathlib import Path
 import chromadb
 from chromadb.config import Settings
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 from data_ingestion import DataIngestion
 
 
@@ -91,8 +90,20 @@ Perks: {', '.join(card_dict['perks'])}
 Description: {card_dict['description']}
             """.strip()
             
+            # Convert lists to strings for ChromaDB metadata (it doesn't support list types)
+            metadata = {
+                "name": card_dict['name'],
+                "issuer": card_dict['issuer'],
+                "annual_fee": card_dict['annual_fee'],
+                "rewards_rate": card_dict['rewards_rate'],
+                "welcome_bonus": card_dict['welcome_bonus'],
+                "categories": ', '.join(card_dict['categories']),
+                "perks": ', '.join(card_dict['perks']),
+                "description": card_dict['description'],
+            }
+            
             documents.append(doc_text)
-            metadatas.append(card_dict)
+            metadatas.append(metadata)
             ids.append(f"card_{idx}")
         
         # Add to ChromaDB
@@ -136,6 +147,11 @@ Description: {card_dict['description']}
         if results['metadatas'] and len(results['metadatas']) > 0:
             for metadata, distance in zip(results['metadatas'][0], results['distances'][0]):
                 card = metadata.copy()
+                # Convert string categories back to list
+                if 'categories' in card and isinstance(card['categories'], str):
+                    card['categories'] = [c.strip() for c in card['categories'].split(',')]
+                if 'perks' in card and isinstance(card['perks'], str):
+                    card['perks'] = [p.strip() for p in card['perks'].split(',')]
                 card['relevance_score'] = 1 - distance  # Convert distance to similarity score
                 cards.append(card)
         
@@ -161,9 +177,11 @@ class CreditCairnAgent:
         """
         # Configure Gemini
         self.api_key = api_key or os.getenv("GOOGLE_API_KEY", "")
-        self.client = None
+        if self.api_key:
+            genai.configure(api_key=self.api_key)
         
         self.model_name = model_name
+        self.model = None
         self.chat = None
         
         # Initialize retriever
@@ -192,21 +210,30 @@ When answering:
 Always base your recommendations on the credit card data provided to you."""
     
     def initialize_model(self) -> None:
-        """Initialize the Gemini client."""
+        """Initialize the Gemini model."""
         if not self.api_key:
             raise ValueError(
                 "No API key provided. Set GOOGLE_API_KEY environment variable or pass api_key parameter."
             )
         
-        self.client = genai.Client(api_key=self.api_key)
+        generation_config = {
+            "temperature": 0.7,
+            "top_p": 0.95,
+            "top_k": 40,
+            "max_output_tokens": 2048,
+        }
+        
+        self.model = genai.GenerativeModel(
+            model_name=self.model_name,
+            generation_config=generation_config,
+        )
     
     def start_chat(self) -> None:
         """Start a new chat session."""
-        if not self.client:
+        if not self.model:
             self.initialize_model()
         
-        # Initialize chat history
-        self.chat_history = []
+        self.chat = self.model.start_chat(history=[])
     
     def get_card_context(self, query: str, n_results: int = 3) -> str:
         """
@@ -247,7 +274,7 @@ Always base your recommendations on the credit card data provided to you."""
         Returns:
             Agent's response
         """
-        if not self.client:
+        if not self.chat:
             self.start_chat()
         
         # Retrieve relevant card information
@@ -262,19 +289,8 @@ User Question: {user_message}
 
 Please provide a helpful response based on the credit card information provided."""
         
-        # Get response from Gemini using the new API
-        config = types.GenerateContentConfig(
-            temperature=0.7,
-            top_p=0.95,
-            top_k=40,
-            max_output_tokens=2048,
-        )
-        
-        response = self.client.models.generate_content(
-            model=self.model_name,
-            contents=prompt,
-            config=config,
-        )
+        # Get response from Gemini
+        response = self.chat.send_message(prompt)
         
         return response.text
     

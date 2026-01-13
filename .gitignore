@@ -210,3 +210,6 @@ __marimo__/
 .chromadb/
 data/
 .streamlit/secrets.toml
+test_retriever_data/
+test_data/
+test_chromadb/

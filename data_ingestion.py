@@ -54,10 +54,13 @@ class CreditCardData:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'CreditCardData':
         """Create CreditCardData from dictionary."""
+        annual_fee = data.get("annual_fee", 0.0)
+        if annual_fee is None:
+            annual_fee = 0.0
         return cls(
             name=data.get("name", "Unknown Card"),
             issuer=data.get("issuer", "Unknown Issuer"),
-            annual_fee=float(data.get("annual_fee", 0.0)),
+            annual_fee=float(annual_fee),
             rewards_rate=data.get("rewards_rate", ""),
             welcome_bonus=data.get("welcome_bonus", ""),
             categories=data.get("categories", []),
@@ -149,19 +152,6 @@ class DataIngestion:
     def load_sample_data(self) -> List[CreditCardData]:
         """Legacy method maintained for compatibility."""
         return self.update_data()
-
-
-    # End of class
-
-        
-        with open(filepath, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        
-        self.cards_data = [
-            CreditCardData(**card_data) for card_data in data.get("cards", [])
-        ]
-        
-        return self.cards_data
     
     def get_all_cards(self) -> List[Dict[str, Any]]:
         """

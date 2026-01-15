@@ -21,7 +21,7 @@ st.set_page_config(
     page_title="CreditCairn - Credit Card Rewards Assistant",
     page_icon="💳",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
     menu_items={
         'Get Help': 'https://github.com/yourusername/CreditCairn',
         'Report a bug': "https://github.com/yourusername/CreditCairn/issues",
@@ -29,118 +29,337 @@ st.set_page_config(
     }
 )
 
-# SaveSage-Inspired Clean Theme CSS
+# Premium Red, White & Blue Theme with Animations
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
     
     :root {
-        --primary: #10B981;
-        --primary-dark: #059669;
-        --primary-light: #D1FAE5;
-        --secondary: #6366F1;
+        --primary: #DC143C;
+        --primary-dark: #8B0000;
+        --primary-light: #FFE4E1;
+        --secondary: #1E40AF;
+        --secondary-light: #DBEAFE;
+        --accent: #FFFFFF;
         --bg-white: #FFFFFF;
-        --bg-light: #F8FAFC;
-        --bg-cream: #FFFBF5;
-        --text-dark: #1E293B;
-        --text-medium: #475569;
-        --text-light: #94A3B8;
-        --border: #E2E8F0;
-        --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-        --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-        --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        --bg-light: #F0F9FF;
+        --bg-gradient: linear-gradient(135deg, #FFE4E1 0%, #F0F9FF 50%, #FFFFFF 100%);
+        --text-dark: #0F172A;
+        --text-medium: #334155;
+        --text-light: #64748B;
+        --border: #CBD5E1;
+        --shadow-sm: 0 2px 8px rgba(220, 20, 60, 0.1);
+        --shadow-md: 0 8px 16px rgba(30, 64, 175, 0.15);
+        --shadow-lg: 0 16px 32px rgba(220, 20, 60, 0.2);
+        --shadow-xl: 0 20px 40px rgba(30, 64, 175, 0.25);
         --radius: 16px;
         --radius-sm: 8px;
         --radius-lg: 24px;
     }
     
-    /* Hide Streamlit chrome */
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-50px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(50px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(220, 20, 60, 0.4); }
+        50% { box-shadow: 0 0 0 10px rgba(220, 20, 60, 0); }
+    }
+    
+    @keyframes bounce-in {
+        0% { opacity: 0; transform: scale(0.3); }
+        50% { opacity: 1; transform: scale(1.05); }
+        70% { transform: scale(0.9); }
+        100% { transform: scale(1); }
+    }
+    
+    @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    @keyframes rotate-gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    /* Hide Main Menu/Footer */
     #MainMenu { visibility: hidden; }
-    header { visibility: hidden; }
     footer { visibility: hidden; }
     
+    /* 
+       FLOATING CHAT OVERLAY & STATIC MAIN PAGE
+       The critical part is detaching the sidebar from the flow entirely.
+    */
+    
+    /* 1. Force sidebar to be a floating box on the right */
+    section[data-testid="stSidebar"] {
+        width: 400px !important;
+        min-width: 400px !important; /* Force width */
+        max-width: 400px !important; /* Prevent expansion */
+        height: 600px !important;
+        position: fixed !important;
+        right: 30px !important;
+        bottom: 30px !important;
+        left: unset !important;
+        top: auto !important;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2) !important;
+        border-radius: 20px !important;
+        border: 1px solid #e2e8f0;
+        z-index: 1000000 !important;
+        transform: none !important; /* Stop Streamlit from sliding it */
+        transition: none !important;
+    }
+    
+    /* Force inner content to match width */
+    div[data-testid="stSidebarUserContent"] {
+        width: 100% !important;
+        padding: 0 !important;
+    }
+
+    /* 2. Style the "Toggle Button" (Collapsed Sidebar) */
+    [data-testid="stSidebarCollapsedControl"] {
+        background: linear-gradient(135deg, #00205B, #DC143C) !important;
+        color: white !important;
+        border-radius: 50% !important;
+        width: 60px !important;
+        height: 60px !important;
+        position: fixed !important;
+        right: 30px !important;
+        bottom: 30px !important;
+        left: unset !important;
+        top: auto !important;
+        z-index: 1000001 !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+        display: grid !important;
+        place-items: center !important;
+        border: 2px solid white !important;
+        transform: none !important;
+    }
+    
+    [data-testid="stSidebarCollapsedControl"] svg {
+        fill: white !important;
+        width: 24px !important;
+        height: 24px !important;
+    }
+
+    /* MINIMIZE BUTTON (Inside Open Chat) - Targeting the StSidebar close button */
+    section[data-testid="stSidebar"] button[kind="header"] {
+        display: block !important; /* Ensure it's not hidden */
+        position: absolute !important;
+        top: 15px !important;
+        right: 15px !important;
+        z-index: 1000002 !important;
+        background: transparent !important;
+        border: none !important;
+        color: #64748B !important;
+        transition: transform 0.2s ease !important;
+    }
+    
+    section[data-testid="stSidebar"] button[kind="header"]:hover {
+        transform: scale(1.1) !important;
+        color: #DC143C !important;
+        background: rgba(0,0,0,0.05) !important;
+        border-radius: 50% !important;
+    }
+    
+    section[data-testid="stSidebar"] button[kind="header"] svg {
+        width: 20px !important;
+        height: 20px !important;
+    }
+
+    /* 3. CRITICAL: Prevent Main Page from shrinking when Sidebar opens */
+    .stApp > header { display: none !important; } /* Hide top header bar completely */
+    
+    section[data-testid="stSidebar"] + div {
+        margin-left: 0 !important; /* Don't shift content */
+        max-width: 100% !important;
+    }
+    
+    .main .block-container {
+        max-width: 1200px !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    /* Header for the chat window */
+    .floating-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: linear-gradient(135deg, #00205B, #DC143C);
+        z-index: 999;
+        display: flex;
+        align-items: center;
+        padding: 0 1.5rem;
+        border-radius: 20px 20px 0 0;
+        color: white;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    /* Custom Chat Input Adjustments */
+    .stChatInputContainer {
+        padding-bottom: 1rem !important;
+    }
+
+    /* Branding Header */
+    .branding-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .branding-logo {
+        font-size: 2.2rem;
+    }
+    
+    .branding-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #00205B 0%, #DC143C 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+
     /* Base styles */
     .stApp {
-        background: linear-gradient(180deg, var(--bg-cream) 0%, var(--bg-light) 50%, var(--bg-white) 100%);
+        background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     
     .block-container {
         padding: 2rem 1rem;
         max-width: 1200px;
+        animation: fadeInDown 0.8s ease-out;
     }
     
     /* Typography */
-    h1, h2, h3, h4, h5, h6, p, span, div, label {
+    h1, h2, h3, h4, h5, h6, p, label {
         font-family: 'Plus Jakarta Sans', sans-serif !important;
     }
     
-    h1, h2, h3 { color: var(--text-dark) !important; }
-    p { color: var(--text-medium) !important; }
-    
-    /* Hero Section */
-    .hero-container {
-        background: linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 50%, #FFFBEB 100%);
-        border-radius: var(--radius-lg);
-        padding: 3rem 2rem;
-        margin-bottom: 2rem;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-        border: 1px solid rgba(16, 185, 129, 0.1);
+    .stApp {
+        font-family: 'Plus Jakarta Sans', sans-serif;
     }
     
-    .hero-container::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -20%;
-        width: 400px;
-        height: 400px;
-        background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
-        pointer-events: none;
+    h1, h2, h3 {
+        color: var(--text-dark) !important;
+        animation: fadeInDown 0.6s ease-out;
+    }
+    
+    p {
+        color: var(--text-medium) !important;
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    /* Table Styling */
+    table {
+        color: var(--text-dark) !important;
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    th, td {
+        color: var(--text-dark) !important;
+        border-bottom: 1px solid #e9ecef !important;
+        padding: 0.75rem !important;
+    }
+    
+    th {
+        background-color: transparent !important;
+        font-weight: 700 !important;
+        border-bottom: 2px solid #DC143C !important;
+    }
+    
+    div[data-testid="stMarkdownContainer"] table {
+        color: var(--text-dark) !important;
+    }
+    
+    div[data-testid="stMarkdownContainer"] th, 
+    div[data-testid="stMarkdownContainer"] td {
+        color: var(--text-dark) !important;
+    }
+    
+    /* Hero Section - Clean & Modern */
+    .hero-container {
+        background: white;
+        text-align: center;
+        padding: 5rem 1rem 3rem 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .hero-container::before, .hero-container::after {
+        display: none;
     }
     
     .hero-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: var(--bg-white);
-        border: 1px solid var(--primary);
+        display: inline-block;
+        background: #F0F9FF;
+        color: #00205B !important;
+        border: 1px solid #DBEAFE;
+        padding: 0.5rem 1rem;
         border-radius: 50px;
-        padding: 6px 16px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: var(--primary-dark);
-        margin-bottom: 1.5rem;
-        box-shadow: var(--shadow-sm);
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
     }
     
     .hero-title {
-        font-size: 3rem;
-        font-weight: 800;
-        color: var(--text-dark) !important;
-        margin-bottom: 1rem;
-        line-height: 1.2;
-        position: relative;
-        z-index: 1;
+        font-size: 3.8rem;
+        font-weight: 900;
+        line-height: 1.1;
+        margin: 0 0 1.5rem 0;
+        color: #0F172A !important;
+        letter-spacing: -1px;
     }
     
     .hero-title span {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        background: linear-gradient(135deg, #DC143C 0%, #00205B 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
     
     .hero-subtitle {
-        font-size: 1.15rem;
-        color: var(--text-medium) !important;
-        max-width: 600px;
-        margin: 0 auto 2rem auto;
-        line-height: 1.7;
-        position: relative;
-        z-index: 1;
+        font-size: 1.25rem;
+        color: #64748B !important;
+        max-width: 650px;
+        margin: 0 auto 2.5rem auto;
+        line-height: 1.6;
+        font-weight: 400;
     }
     
     /* Stats Bar */
@@ -149,109 +368,163 @@ st.markdown("""
         justify-content: center;
         gap: 3rem;
         flex-wrap: wrap;
-        padding: 1.5rem 0;
+        padding: 2rem 0;
         position: relative;
         z-index: 1;
+        animation: fadeInUp 0.8s ease-out 0.4s both;
     }
     
-    .stat-item { text-align: center; }
+    .stat-item {
+        text-align: center;
+        animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) var(--delay, 0s);
+        transition: all 0.3s ease;
+    }
+    
+    .stat-item:nth-child(1) { --delay: 0.4s; }
+    .stat-item:nth-child(2) { --delay: 0.5s; }
+    .stat-item:nth-child(3) { --delay: 0.6s; }
+    
+    .stat-item:hover {
+        transform: scale(1.1);
+        filter: drop-shadow(0 10px 20px rgba(220, 20, 60, 0.3));
+    }
     
     .stat-value {
-        font-size: 2rem;
-        font-weight: 800;
-        color: var(--primary-dark) !important;
+        font-size: 2.8rem;
+        font-weight: 950;
+        color: #FFFFFF !important;
         display: block;
-        line-height: 1.2;
+        line-height: 1;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        margin-bottom: 0.5rem;
     }
     
     .stat-label {
-        font-size: 0.85rem;
-        color: var(--text-light) !important;
-        font-weight: 500;
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.9) !important;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
     }
     
     /* Feature Cards */
     .feature-card {
-        background: var(--bg-white);
-        border: 1px solid var(--border);
+        background: #FFFFFF;
+        border: 1px solid #e9ecef;
         border-radius: var(--radius);
-        padding: 1.5rem;
+        padding: 2rem;
         height: 100%;
-        transition: all 0.3s ease;
-        box-shadow: var(--shadow-sm);
+        transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        animation: fadeInUp 0.6s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, #DC143C, #1E40AF);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .feature-card:hover::before {
+        transform: scaleX(1);
     }
     
     .feature-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-lg);
-        border-color: var(--primary);
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+        border-color: rgba(220, 20, 60, 0.2);
     }
     
     .feature-icon {
-        width: 48px;
-        height: 48px;
+        width: 56px;
+        height: 56px;
         border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
+        font-size: 1.75rem;
+        margin-bottom: 1.25rem;
+        transition: all 0.3s ease;
+        animation: bounce-in 0.6s ease-out;
     }
     
-    .feature-icon.green { background: var(--primary-light); }
-    .feature-icon.purple { background: #EDE9FE; }
-    .feature-icon.orange { background: #FEF3C7; }
-    .feature-icon.blue { background: #DBEAFE; }
+    .feature-icon.red { background: linear-gradient(135deg, #fee2e2, #fecaca); color: #DC143C; }
+    .feature-icon.blue { background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: #1E40AF; }
+    .feature-icon.white { background: linear-gradient(135deg, #f8fafc, #f1f5f9); color: #475569; }
+    .feature-icon.gradient { background: linear-gradient(135deg, #fee2e2, #dbeafe); color: #DC143C; }
+    
+    .feature-card:hover .feature-icon {
+        transform: translateY(-4px) scale(1.05);
+    }
     
     .feature-title {
-        font-size: 1.1rem;
-        font-weight: 700;
+        font-size: 1.25rem;
+        font-weight: 800;
         color: var(--text-dark) !important;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.75rem;
     }
     
     .feature-desc {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         color: var(--text-medium) !important;
-        line-height: 1.6;
+        line-height: 1.7;
     }
     
     /* Section Headers */
     .section-header {
         text-align: center;
-        margin: 3rem 0 2rem 0;
+        margin: 4rem 0 3rem 0;
+        animation: fadeInDown 0.8s ease-out;
     }
     
     .section-title {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(--text-dark) !important;
-        margin-bottom: 0.5rem;
+        font-size: 2.2rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #DC143C, #1E40AF);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.75rem;
     }
     
     .section-subtitle {
-        font-size: 1rem;
+        font-size: 1.1rem;
         color: var(--text-light) !important;
+        font-weight: 500;
     }
     
     /* Testimonial Cards */
     .testimonial-card {
-        background: var(--bg-white);
-        border: 1px solid var(--border);
+        background: linear-gradient(135deg, #FFFFFF 0%, #FFE4E1 100%);
+        border: 2px solid #DC143C;
         border-radius: var(--radius);
-        padding: 1.5rem;
-        box-shadow: var(--shadow-sm);
-        transition: all 0.3s ease;
+        padding: 2rem;
+        box-shadow: var(--shadow-lg);
+        transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+        animation: fadeInUp 0.6s ease-out;
     }
     
-    .testimonial-card:hover { box-shadow: var(--shadow-md); }
+    .testimonial-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 25px 50px rgba(220, 20, 60, 0.3);
+        border-color: #1E40AF;
+    }
     
     .testimonial-quote {
-        font-size: 0.95rem;
+        font-size: 1rem;
         color: var(--text-medium) !important;
         font-style: italic;
-        line-height: 1.7;
-        margin-bottom: 1rem;
+        line-height: 1.8;
+        margin-bottom: 1.5rem;
+        font-weight: 500;
     }
     
     .testimonial-author {
@@ -261,26 +534,28 @@ st.markdown("""
     }
     
     .author-avatar {
-        width: 40px;
-        height: 40px;
+        width: 50px;
+        height: 50px;
         border-radius: 50%;
-        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        background: linear-gradient(135deg, #DC143C, #1E40AF);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 700;
-        font-size: 0.9rem;
+        font-weight: 900;
+        font-size: 1rem;
         color: white;
+        box-shadow: 0 4px 15px rgba(220, 20, 60, 0.3);
+        animation: bounce-in 0.6s ease-out;
     }
     
     .author-name {
-        font-weight: 600;
-        font-size: 0.9rem;
+        font-weight: 700;
+        font-size: 0.95rem;
         color: var(--text-dark) !important;
     }
     
     .author-role {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         color: var(--text-light) !important;
     }
     
@@ -289,130 +564,177 @@ st.markdown("""
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 2rem;
-        padding: 1.5rem;
-        background: var(--bg-white);
+        gap: 2.5rem;
+        padding: 2rem;
+        background: linear-gradient(135deg, rgba(220, 20, 60, 0.05), rgba(30, 64, 175, 0.05));
         border-radius: var(--radius);
-        border: 1px solid var(--border);
-        margin: 2rem 0;
+        border: 2px dashed #DC143C;
+        margin: 3rem 0;
         flex-wrap: wrap;
+        animation: fadeInUp 0.8s ease-out;
     }
     
     .trust-badge {
         display: flex;
         align-items: center;
-        gap: 8px;
-        font-size: 0.85rem;
+        gap: 10px;
+        font-size: 0.9rem;
         color: var(--text-medium);
-        font-weight: 500;
+        font-weight: 700;
+        animation: slideInLeft 0.6s ease-out;
     }
     
-    .trust-badge .icon { font-size: 1.2rem; }
+    .trust-badge .icon {
+        font-size: 1.5rem;
+        animation: bounce-in 0.6s ease-out;
+    }
     
     /* Buttons */
     div.stButton > button {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        background: linear-gradient(135deg, #DC143C 0%, #8B0000 100%);
         border: none;
         color: white !important;
         border-radius: var(--radius-sm);
         font-family: 'Plus Jakarta Sans', sans-serif;
-        font-weight: 600;
-        font-size: 0.95rem;
-        padding: 0.75rem 1.5rem;
+        font-weight: 700;
+        font-size: 1rem;
+        padding: 0.85rem 2rem;
         height: auto;
-        transition: all 0.3s ease;
-        box-shadow: var(--shadow-md);
+        transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+        box-shadow: 0 10px 30px rgba(220, 20, 60, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    div.stButton > button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        animation: shimmer 3s infinite;
     }
     
     div.stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-lg), 0 0 20px rgba(16, 185, 129, 0.3);
+        transform: translateY(-3px);
+        box-shadow: 0 20px 40px rgba(220, 20, 60, 0.4), 0 0 30px rgba(30, 64, 175, 0.2);
+    }
+    
+    div.stButton > button:active {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(220, 20, 60, 0.3);
     }
     
     /* Chat Messages */
     div[data-testid="stChatMessage"] {
-        background: var(--bg-white);
-        border: 1px solid var(--border);
+        background: linear-gradient(135deg, #FFFFFF, #F0F9FF);
+        border: 1px solid #CBD5E1;
         border-radius: var(--radius);
-        padding: 1rem 1.25rem;
-        margin-bottom: 0.75rem;
-        box-shadow: var(--shadow-sm);
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        box-shadow: var(--shadow-md);
+        animation: fadeInUp 0.4s ease-out;
     }
     
     div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) {
-        background: linear-gradient(135deg, #F0FDF4, #ECFDF5);
-        border-color: rgba(16, 185, 129, 0.2);
+        background: linear-gradient(135deg, #FFE4E1, #F0F9FF);
+        border-color: rgba(220, 20, 60, 0.3);
     }
     
     /* Sidebar */
     section[data-testid="stSidebar"] {
-        background: var(--bg-white);
-        border-right: 1px solid var(--border);
+        background: linear-gradient(180deg, #FFFFFF, #F0F9FF);
+        border-right: 2px solid #DC143C;
     }
     
     /* Inputs */
     .stTextInput > div > div > input {
         background: var(--bg-white) !important;
-        border: 1px solid var(--border) !important;
+        border: 2px solid #CBD5E1 !important;
         border-radius: var(--radius-sm) !important;
         color: var(--text-dark) !important;
         font-family: 'Plus Jakarta Sans', sans-serif !important;
-        padding: 0.75rem 1rem !important;
+        padding: 0.85rem 1rem !important;
+        transition: all 0.3s ease !important;
     }
     
     .stTextInput > div > div > input:focus {
-        border-color: var(--primary) !important;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+        border-color: #DC143C !important;
+        box-shadow: 0 0 0 4px rgba(220, 20, 60, 0.15) !important;
+        outline: none !important;
     }
     
     .stChatInputContainer textarea {
         background: var(--bg-white) !important;
-        border: 1px solid var(--border) !important;
+        border: 2px solid #CBD5E1 !important;
         border-radius: var(--radius) !important;
         font-family: 'Plus Jakarta Sans', sans-serif !important;
+        transition: all 0.3s ease !important;
     }
     
     .stChatInputContainer textarea:focus {
-        border-color: var(--primary) !important;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+        border-color: #DC143C !important;
+        box-shadow: 0 0 0 4px rgba(220, 20, 60, 0.15) !important;
+        outline: none !important;
     }
     
     /* Metrics */
     div[data-testid="metric-container"] {
-        background: var(--bg-white);
-        border: 1px solid var(--border);
+        background: linear-gradient(135deg, #FFFFFF, #F0F9FF);
+        border: 2px solid #DC143C;
         border-radius: var(--radius-sm);
-        padding: 1rem;
-        box-shadow: var(--shadow-sm);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-md);
+        animation: fadeInUp 0.6s ease-out;
     }
     
     div[data-testid="metric-container"] label { color: var(--text-light) !important; }
     div[data-testid="metric-container"] div[data-testid="stMetricValue"] {
-        color: var(--primary-dark) !important;
-        font-weight: 700;
+        color: #DC143C !important;
+        font-weight: 900;
     }
     
     /* Expander */
     .streamlit-expanderHeader {
-        background: var(--bg-light) !important;
-        border: 1px solid var(--border) !important;
+        background: linear-gradient(135deg, #FFE4E1, #F0F9FF) !important;
+        border: 1px solid #DC143C !important;
         border-radius: var(--radius-sm) !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
     }
     
     /* Divider */
     hr {
         border: none;
-        height: 1px;
-        background: var(--border);
-        margin: 1.5rem 0;
+        height: 2px;
+        background: linear-gradient(90deg, #DC143C, #1E40AF);
+        margin: 2rem 0;
     }
     
     /* Scrollbar */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
     ::-webkit-scrollbar-track { background: var(--bg-light); }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--text-light); }
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #DC143C, #1E40AF);
+        border-radius: 5px;
+        animation: rotate-gradient 3s linear infinite;
+    }
+    ::-webkit-scrollbar-thumb:hover { opacity: 0.8; }
+    
+    /* Global animations */
+    * {
+        box-sizing: border-box;
+    }
+    
+    .stMarkdown code {
+        background: linear-gradient(135deg, #FFE4E1, #F0F9FF) !important;
+        border: 1px solid #DC143C !important;
+        border-radius: 4px !important;
+        padding: 0.25rem 0.5rem !important;
+        color: #8B0000 !important;
+        font-weight: 600 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -425,6 +747,8 @@ def initialize_session_state() -> None:
         st.session_state.agent = None
     if "agent_initialized" not in st.session_state:
         st.session_state.agent_initialized = False
+    if "chat_open" not in st.session_state:
+        st.session_state.chat_open = False
 
 
 def initialize_agent(api_key: str) -> bool:
@@ -454,21 +778,6 @@ def display_welcome_message() -> None:
             Effortlessly maximize your credit card rewards. Get personalized recommendations, 
             compare cards instantly, and never leave money on the table.
         </p>
-        
-        <div class="stats-bar">
-            <div class="stat-item">
-                <span class="stat-value">50+</span>
-                <span class="stat-label">Cards Analyzed</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-value">$2,500+</span>
-                <span class="stat-label">Avg. Annual Savings</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-value">24/7</span>
-                <span class="stat-label">AI Assistant</span>
-            </div>
-        </div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -528,96 +837,10 @@ def display_welcome_message() -> None:
     </div>
     """, unsafe_allow_html=True)
     
-    # Testimonials
-    st.markdown("""
-    <div class="section-header">
-        <h2 class="section-title">What Our Users Say</h2>
-        <p class="section-subtitle">Join thousands of Canadians maximizing their rewards</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    t1, t2, t3 = st.columns(3)
-    
-    with t1:
-        st.markdown("""
-        <div class="testimonial-card">
-            <p class="testimonial-quote">"CreditCairn helped me find a card that saves me $200/month on groceries. The AI recommendations are spot on!"</p>
-            <div class="testimonial-author">
-                <div class="author-avatar">SK</div>
-                <div class="author-info">
-                    <div class="author-name">Sarah K.</div>
-                    <div class="author-role">Toronto, ON</div>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with t2:
-        st.markdown("""
-        <div class="testimonial-card">
-            <p class="testimonial-quote">"I've earned enough points for a free trip to Vancouver just by optimizing my everyday spending. Game changer!"</p>
-            <div class="testimonial-author">
-                <div class="author-avatar">MR</div>
-                <div class="author-info">
-                    <div class="author-name">Michael R.</div>
-                    <div class="author-role">Calgary, AB</div>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with t3:
-        st.markdown("""
-        <div class="testimonial-card">
-            <p class="testimonial-quote">"Finally, an AI that understands Canadian credit cards. No more sifting through US-focused advice!"</p>
-            <div class="testimonial-author">
-                <div class="author-avatar">JP</div>
-                <div class="author-info">
-                    <div class="author-name">Jessica P.</div>
-                    <div class="author-role">Vancouver, BC</div>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Quick Action Buttons
-    st.markdown("""
-    <div class="section-header" style="margin-top: 1rem;">
-        <h2 class="section-title">Start Saving Today</h2>
-        <p class="section-subtitle">Click a question or type your own below</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    col_a, col_b = st.columns(2)
-    with col_a:
-        if st.button("🛒  Best Cards for Groceries", key="btn_grocery", use_container_width=True):
-            handle_quick_prompt("What are the best credit cards for grocery shopping in Canada?")
-    with col_b:
-        if st.button("✈️  How to Travel for Free", key="btn_travel", use_container_width=True):
-            handle_quick_prompt("How can I use credit card points to travel for free in Canada?")
-            
-    col_c, col_d = st.columns(2)
-    with col_c:
-        if st.button("💵  Best No-Fee Cards", key="btn_nofee", use_container_width=True):
-            handle_quick_prompt("What are the best no annual fee credit cards in Canada?")
-    with col_d:
-        if st.button("🎁  Top Welcome Bonuses", key="btn_bonus", use_container_width=True):
-            handle_quick_prompt("Which Canadian credit cards have the best welcome bonus right now?")
-
-
 def handle_quick_prompt(prompt_text: str):
     """Handle a click on a quick prompt button."""
     st.session_state.messages.append({"role": "user", "content": prompt_text})
     st.rerun()
-
-
-def display_chat_history() -> None:
-    """Display chat message history."""
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
 
 
 def get_agent_response(user_input: str) -> str:
@@ -629,114 +852,74 @@ def get_agent_response(user_input: str) -> str:
         return f"I apologize, but I encountered an error: {str(e)}\n\nPlease make sure your API key is valid and try again."
 
 
-def display_sidebar() -> None:
-    """Display sidebar with information and controls."""
+def render_chat_interface() -> None:
+    """Render chat interface in the floating sidebar."""
     with st.sidebar:
-        # Logo Area
         st.markdown("""
-        <div style="text-align: center; padding: 1.5rem 0;">
-            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">💳</div>
-            <h1 style="margin: 0; font-size: 1.5rem; font-weight: 800; background: linear-gradient(135deg, #10B981, #6366F1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CreditCairn</h1>
-            <p style="color: #94A3B8; font-size: 0.8rem; margin: 0.25rem 0 0 0;">AI Credit Card Advisor</p>
+        <div style="padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0; margin-bottom: 1rem;">
+            <h3 style="margin: 0; color: #0F172A;">💬 CreditCairn Assistant</h3>
+            <p style="margin: 0; font-size: 0.8rem; color: #64748B;">Ask me anything about credit cards</p>
         </div>
         """, unsafe_allow_html=True)
         
-        st.divider()
-        
-        # API Connection
-        with st.expander("🔑 API Connection", expanded=not bool(os.getenv("GOOGLE_API_KEY"))):
-            env_api_key = os.getenv("GOOGLE_API_KEY", "")
-            
-            if env_api_key:
-                st.success("✓ Connected", icon="🟢")
-                api_key = env_api_key
-                if not st.session_state.agent_initialized:
-                    if initialize_agent(api_key):
-                        st.rerun()
-            else:
-                api_key = st.text_input("Google API Key", type="password", placeholder="Enter your API key...")
-                if api_key:
-                    if st.button("Connect", type="primary", use_container_width=True):
-                        if initialize_agent(api_key):
-                            st.rerun()
-                st.caption("[Get API Key →](https://makersuite.google.com/app/apikey)")
-        
-        st.divider()
-        
-        # Stats
-        if st.session_state.agent_initialized:
-            st.markdown("##### 📊 Session Stats")
-            try:
-                card_count = st.session_state.agent.retriever.collection.count()
-                col1, col2 = st.columns(2)
-                col1.metric("Cards", card_count)
-                col2.metric("Messages", len(st.session_state.messages))
-            except:
-                pass
-            st.divider()
-        
-        # Actions
-        if st.button("🗑️ Clear Chat", use_container_width=True):
-            st.session_state.messages = []
-            if st.session_state.agent:
-                st.session_state.agent.start_chat()
+        # Quick prompts (Compact Grid)
+        if not st.session_state.messages:
+             st.markdown('<p style="font-size: 0.75rem; font-weight: 700; color: #334155; margin-bottom: 0.5rem;">SUGGESTED</p>', unsafe_allow_html=True)
+             c1, c2 = st.columns(2)
+             with c1:
+                 if st.button("🛒 Groceries", use_container_width=True):
+                     handle_quick_prompt("What are the best credit cards for grocery shopping in Canada?")
+                 if st.button("💵 No Fees", use_container_width=True):
+                     handle_quick_prompt("What are the best no annual fee credit cards in Canada?")
+             with c2:
+                 if st.button("✈️ Travel", use_container_width=True):
+                     handle_quick_prompt("How can I use credit card points to travel for free in Canada?")
+                 if st.button("🎁 Bonuses", use_container_width=True):
+                     handle_quick_prompt("Which Canadian credit cards have the best welcome bonus right now?")
+             st.divider()
+
+        # Chat history
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+        # Process pending user message
+        if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+            with st.chat_message("assistant"):
+                with st.spinner("Thinking..."):
+                    response = get_agent_response(st.session_state.messages[-1]["content"])
+                    st.markdown(response)
+            st.session_state.messages.append({"role": "assistant", "content": response})
             st.rerun()
-        
-        # Footer
-        st.markdown("""
-        <div style='margin-top: 2rem; text-align: center; padding: 1rem; background: #F8FAFC; border-radius: 8px;'>
-            <p style="color: #94A3B8; font-size: 0.75rem; margin: 0;">Made with ❤️ for Canadians</p>
-            <p style="color: #CBD5E1; font-size: 0.7rem; margin: 0.25rem 0 0 0;">v1.0 • Powered by Gemini AI</p>
-        </div>
-        """, unsafe_allow_html=True)
+
+        # Input is handled by st.chat_input automatically at the bottom of the sidebar
+        if prompt := st.chat_input("Type your question..."):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            st.rerun()
 
 
 def main() -> None:
     """Main application function."""
     initialize_session_state()
-    display_sidebar()
     
-    # Show setup prompt if not initialized
+    # Auto-initialize agent from environment (no API/settings UI on page)
     if not st.session_state.agent_initialized:
-        st.markdown("""
-        <div class="hero-container" style="max-width: 600px; margin: 4rem auto;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">🔑</div>
-            <h2 style="color: #1E293B; margin-bottom: 0.5rem;">Connect to Get Started</h2>
-            <p style="color: #64748B;">Enter your Google API key in the sidebar to unlock the AI assistant.</p>
-        </div>
-        """, unsafe_allow_html=True)
-        return
+        env_api_key = os.getenv("GOOGLE_API_KEY", "")
+        if env_api_key:
+            initialize_agent(env_api_key)
     
-    # Display welcome or chat
-    if not st.session_state.messages:
-        display_welcome_message()
-    else:
-        # Compact header when chatting
-        st.markdown("""
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; padding: 0.75rem 1rem; background: white; border-radius: 12px; border: 1px solid #E2E8F0;">
-            <span style="font-size: 1.5rem;">💳</span>
-            <div>
-                <div style="font-weight: 700; color: #1E293B; font-size: 1rem;">CreditCairn</div>
-                <div style="font-size: 0.75rem; color: #10B981;">● Online</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+    # Always render branding and landing page content in Main Area
+    st.markdown("""
+    <div class="branding-header">
+        <div class="branding-logo">💳</div>
+        <h1 class="branding-title">CreditCairn</h1>
+    </div>
+    """, unsafe_allow_html=True)
     
-    display_chat_history()
+    display_welcome_message()
     
-    # Process pending messages
-    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
-        with st.chat_message("assistant"):
-            with st.spinner("Finding the best advice for you..."):
-                response = get_agent_response(st.session_state.messages[-1]["content"])
-                st.markdown(response)
-        st.session_state.messages.append({"role": "assistant", "content": response})
-        st.rerun()
-    
-    # Chat input
-    if prompt := st.chat_input("Ask me anything about Canadian credit cards..."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        st.rerun()
+    # Render Floating Chat Interface
+    render_chat_interface()
 
 
 if __name__ == "__main__":
